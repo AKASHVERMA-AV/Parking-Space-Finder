@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Space Finder - India</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 400px;
+        }
+
+        .available {
+            background-color: #d1fae5;
+        }
+
+        .unavailable {
+            background-color: #fee2e2;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4 text-center">Parking Space Finder - India</h1>
+
+        <!-- Map Section -->
+        <div id="map" class="rounded shadow mb-6"></div>
+
+        <!-- Search Section -->
+        <div class="mb-6">
+            <input id="searchInput" type="text" placeholder="Search parking lot by name..."
+                class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-blue-300">
+            <p id="errorMessage" class="text-red-500 text-sm mt-2 hidden">No matching parking lot found.</p>
+        </div>
+
+        <!-- Parking Lot Details -->
+        <div id="parking-lots" class="space-y-4"></div>
+    </div>
+
+    <!-- Leaflet.js Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Mock parking lot data (Centered in India)
+        const parkingLots = [
+            { name: "Lot A - Delhi", location: [28.6139, 77.2090], capacity: 120, available: 90 },
+            { name: "Lot B - Mumbai", location: [19.0760, 72.8777], capacity: 80, available: 30 },
+            { name: "Lot C - Bengaluru", location: [12.9716, 77.5946], capacity: 60, available: 45 },
+            { name: "Lot D - Chennai", location: [13.0827, 80.2707], capacity: 100, available: 70 },
+        ];
+
+        // Initialize map centered on India
+        let map = L.map('map').setView([20.5937, 78.9629], 5); // Coordinates for India's center
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add markers for parking lots
+        const markers = parkingLots.map((lot, index) => {
+            const marker = L.marker(lot.location).addTo(map);
+            marker.bindPopup(`<b>${lot.name}</b><br>Capacity: ${lot.capacity}<br>Available: ${lot.available}`);
+            marker.on('click', () => displayParkingLotInfo(index));
+            return marker;
+        });
+
+        // Display parking lot details
+        function displayParkingLotInfo(index) {
+            const lot = parkingLots[index];
+            const parkingLotsDiv = document.getElementById("parking-lots");
+            parkingLotsDiv.innerHTML = "";
+
+            const lotDiv = document.createElement("div");
+            lotDiv.className = `p-4 rounded shadow ${lot.available > 0 ? 'available' : 'unavailable'}`;
+            lotDiv.innerHTML = `
+                <h2 class="text-xl font-bold">${lot.name}</h2>
+                <p>Capacity: ${lot.capacity}</p>
+                <p>Available: ${lot.available}</p>
+                <p>Availability: ${lot.available > 0 ? 'Available' : 'Unavailable'}</p>
+            `;
+
+            parkingLotsDiv.appendChild(lotDiv);
+        }
+
+        // Search functionality
+        document.getElementById("searchInput").addEventListener("input", (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const errorMessage = document.getElementById("errorMessage");
+
+            const index = parkingLots.findIndex(lot => lot.name.toLowerCase().includes(searchTerm));
+            if (index >= 0) {
+                errorMessage.classList.add("hidden");
+                displayParkingLotInfo(index);
+                map.setView(parkingLots[index].location, 15);
+            } else {
+                errorMessage.classList.remove("hidden");
+            }
+        });
+
+        // Simulate real-time updates
+        setInterval(() => {
+            parkingLots.forEach((lot, index) => {
+                lot.available = Math.floor(Math.random() * lot.capacity); // Randomly update availability
+                markers[index].bindPopup(`<b>${lot.name}</b><br>Capacity: ${lot.capacity}<br>Available: ${lot.available}`);
+            });
+
+            displayParkingLotInfo(0); // Refresh the first lot info
+        }, 5000);
+    </script>
+</body>
+
+</html>
+
